@@ -1,5 +1,9 @@
 module Parser.Lexer
-       ( parens
+       ( reservedWords
+       , spaceConsumer
+       , lexeme
+       , symbol
+       , parens
        , integer
        , reservedWord
        , identifier

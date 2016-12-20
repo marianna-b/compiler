@@ -1,14 +1,21 @@
 module AST
-       (
+       ( Module (..)
+       , TopLevelDecl (..)
+       , Expr (..)
+       , BindingName (..)
+       , ParamsList (..)
+       , LiteralValue (..)
        ) where
 
-data TopLevelDecl = FuncDecl BindingName ParamsList
+type Module = [TopLevelDecl]
+
+data TopLevelDecl = FuncDecl BindingName ParamsList Expr
                   deriving (Show)
 
-data ASTExpr = Literal LiteralValue
-             | Binding BindingName
-             | FuncCall ASTExpr ASTExpr
-             deriving (Show)
+data Expr = Literal LiteralValue
+          | Binding BindingName
+          | FuncCall [Expr]
+          deriving (Show)
 
 type BindingName = String
 
