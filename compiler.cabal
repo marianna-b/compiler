@@ -20,8 +20,13 @@ executable compiler
                        Parser
                        Parser.Lexer
                        Parser.Parser
+                       Codegeneration
+                       IR
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5,
                        megaparsec,
                        llvm-general,
-                       llvm-general-pure
+                       llvm-general-pure,
+                       containers >= 0.5,
+                       mtl >= 2.2,
+                       haskeline >= 0.7

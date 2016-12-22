@@ -9,7 +9,8 @@ module AST
 
 type Module = [TopLevelDecl]
 
-data TopLevelDecl = FuncDecl BindingName ParamsList Expr
+data TopLevelDecl = FuncDecl BindingName ParamsList [Expr]
+                  | ExternFunc BindingName ParamsList
                   deriving (Show)
 
 data Expr = Literal LiteralValue

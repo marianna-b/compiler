@@ -1,5 +1,6 @@
 module Parser.Parser
        (
+         parseFile
        ) where
 
 import Text.Megaparsec
@@ -13,6 +14,10 @@ import AST ( Module (..)
            , LiteralValue (..))
 import qualified Parser.Lexer as L
 
+
+parseFile :: String -> Either ParseError Module
+parseFile = parse sourceFile "<stdin>"
+
 sourceFile :: Parser Module
 sourceFile = L.spaceConsumer *> topLevelDecls <* eof
 
@@ -20,13 +25,18 @@ topLevelDecls :: Parser [TopLevelDecl]
 topLevelDecls = some topLevelDecl
 
 topLevelDecl :: Parser TopLevelDecl
-topLevelDecl = topLevelFuncDecl
+topLevelDecl = topLevelFuncDecl <|> externFuncDecl
 
 topLevelFuncDecl :: Parser TopLevelDecl
-topLevelFuncDecl = FuncDecl <$> name <*> params <* L.symbol "=" <*> body
+topLevelFuncDecl = FuncDecl <$> (L.reservedWord "def" *> name) <*> params <* L.symbol "=" <*> body
   where name = bindingDecl
-        params = some binding
-        body = expr
+        params = many binding
+        body = some $ expr <* L.symbol ";"
+
+externFuncDecl :: Parser TopLevelDecl
+externFuncDecl = ExternFunc <$> (L.reservedWord "extern" *> name) <*> params
+  where name = bindingDecl
+        params = many binding
 
 expr :: Parser Expr
 expr = try (FuncCall <$> funcCall) <|>

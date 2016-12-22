@@ -21,6 +21,8 @@ reservedWords = [ "if"
                 , "else"
                 , "let"
                 , "in"
+                , "extern"
+                , "def"
                 ]
 
 spaceConsumer :: Parser ()
