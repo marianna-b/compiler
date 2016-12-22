@@ -18,7 +18,7 @@ data Expr = Literal LiteralValue
           | FuncCall [Expr]
           deriving (Show)
 
-type BindingName = String
+type BindingName = (String, String)
 
 type ParamsList = [BindingName]
 

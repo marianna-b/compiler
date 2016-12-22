@@ -7,6 +7,7 @@ module Parser.Lexer
        , integer
        , reservedWord
        , identifier
+       , builtInType
        ) where
 
 import Control.Monad (void)
@@ -23,6 +24,9 @@ reservedWords = [ "if"
                 , "in"
                 , "extern"
                 , "def"
+                , "string"
+                , "int"
+                , "double"
                 ]
 
 spaceConsumer :: Parser ()
@@ -44,6 +48,9 @@ integer = lexeme L.integer
 
 reservedWord :: String -> Parser ()
 reservedWord w = string w *> notFollowedBy alphaNumChar *> spaceConsumer
+
+builtInType :: String -> Parser String
+builtInType w = string w <* notFollowedBy alphaNumChar <* spaceConsumer
 
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)

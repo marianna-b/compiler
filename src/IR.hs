@@ -19,80 +19,47 @@ import qualified Data.Map as Map
 import Codegeneration
 import qualified AST as A
 
-toSig :: [String] -> [(AST.Type, AST.Name)]
-toSig = map (\x -> (integer, AST.Name x))
+typed :: String -> AST.Type
+typed "int" = integer
+typed "double" = double
+typed s = error $ "Unknown type" ++ s
+
+parseType :: (String, String) -> (AST.Type, AST.Name)
+parseType (t, x) = (typed t, AST.Name x)
+
+toSig :: [(String, String)] -> [(AST.Type, AST.Name)]
+toSig = map parseType
 
 codegenTop :: A.TopLevelDecl -> LLVM ()
-codegenTop (A.FuncDecl name args body)
-  | name == "main" = codegenMain body
-  | otherwise = do
-      define integer name fnargs bls
-        where
-          fnargs = toSig args
-          bls = createBlocks $ execCodegen $ do
-            entry <- addBlock entryBlockName
-            setBlock entry
-            forM args $ \a -> do
-              var <- alloca integer
-              store var (local (AST.Name a))
-              assign a var
-            traverse (\x -> cgen x >>= ret) body
+codegenTop (A.FuncDecl tn args body) = do
+  define t name fnargs bls
+    where
+      (t, name) = parseType tn
+      fnargs = toSig args
+      bls = createBlocks $ execCodegen $ do
+        entry <- addBlock entryBlockName
+        setBlock entry
+        forM args $ \(t1, a) -> do
+          let ty = typed t1
+          var <- alloca ty
+          store ty var (local ty (AST.Name a))
+          assign a var
+        traverse (\x -> cgen x >>= ret) body
 
-codegenTop (A.ExternFunc name args) = do
-  external integer name fnargs
-  where fnargs = toSig args
-
-codegenMain :: [A.Expr] -> LLVM ()
-codegenMain body = do
-  define integer "main" [] blks
+codegenTop (A.ExternFunc tn args) = do
+  external t name fnargs
   where
-    blks = createBlocks $ execCodegen $ do
-      entry <- addBlock entryBlockName
-      setBlock entry
-      traverse (\x -> cgen x >>= ret) body
-
--------------------------------------------------------------------------------
--- Operations
--------------------------------------------------------------------------------
-
-lt :: AST.Operand -> AST.Operand -> Codegen AST.Operand
-lt a b = do
-  test <- icmp IP.ULT a b
-  return test
-
-binops = Map.fromList [
-      ("+", add)
-    , ("-", sub)
-    , ("*", mul)
-    , ("/", idiv)
-    , ("<", lt)
-  ]
-
+    fnargs = toSig args
+    (t, name) = parseType tn
 
 cgen :: A.Expr -> Codegen AST.Operand
---cgen (UnaryOp op a) = do
---  cgen $ Call ("unary" ++ op) [a]
---cgen (BinaryOp "=" (Var var) val) = do
---  a <- getvar var
---  cval <- cgen val
---  store a cval
---  return cval
---cgen (BinaryOp op a b) = do
---  case Map.lookup op binops of
---    Just f  -> do
---      ca <- cgen a
---      cb <- cgen b
---      f ca cb
---    Nothing -> error "No such operator"
-cgen (A.Binding x) = getvar x >>= load
+cgen (A.Binding (t, x)) = getvar x >>= load (typed t)
 cgen (A.Literal (A.IntegerLiteral n)) = return $ cons $ C.Int 64 n
-cgen (A.FuncCall  (A.Binding fn:args)) = do
+cgen (A.FuncCall  (A.Binding (t, fn):args)) = do
   largs <- mapM cgen args
-  call (externf (AST.Name fn)) largs
+  let ty = typed t
+  call ty (externf ty (AST.Name fn)) largs
 
--------------------------------------------------------------------------------
--- Compilation
--------------------------------------------------------------------------------
 
 liftError :: ExceptT String IO a -> IO a
 liftError = runExceptT >=> either fail return

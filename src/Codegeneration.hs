@@ -25,6 +25,9 @@ import qualified LLVM.General.AST.IntegerPredicate as IP
 integer :: Type
 integer = i64
 
+double :: Type
+double = FloatingPointType 64 IEEE
+
 -------------------------------------------------------------------------------
 -- Module Level
 -------------------------------------------------------------------------------
@@ -43,31 +46,23 @@ addDefn d = do
   defs <- gets moduleDefinitions
   modify $ \s -> s { moduleDefinitions = defs ++ [d] }
 
-define ::  Type -> String -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
-define retty label argtys body = addDefn $
+define ::  Type -> Name -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
+define retty n argtys body = addDefn $
   GlobalDefinition $ functionDefaults {
-    name        = Name label
+    name = n
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
   , returnType  = retty
   , basicBlocks = body
   }
 
-external ::  Type -> String -> [(Type, Name)] -> LLVM ()
-external retty label argtys = addDefn $
+external ::  Type -> Name -> [(Type, Name)] -> LLVM ()
+external retty n argtys = addDefn $
   GlobalDefinition $ functionDefaults {
-    name        = Name label
+    name = n
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
   , returnType  = retty
   , basicBlocks = []
   }
-
----------------------------------------------------------------------------------
--- Types
--------------------------------------------------------------------------------
-
--- IEEE 754 double
-double :: Type
-double = FloatingPointType 64 IEEE
 
 -------------------------------------------------------------------------------
 -- Names
@@ -144,14 +139,14 @@ fresh = do
   modify $ \s -> s { count = 1 + i }
   return $ i + 1
 
-instr :: Instruction -> Codegen (Operand)
-instr ins = do
+instr :: Type -> Instruction -> Codegen (Operand)
+instr t ins = do
   n <- fresh
   let ref = (UnName n)
   blk <- current
   let i = stack blk
   modifyBlock (blk { stack = i ++ [ref := ins] } )
-  return $ local ref
+  return $ local t ref
 
 terminator :: Named Terminator -> Codegen (Named Terminator)
 terminator trm = do
@@ -201,8 +196,6 @@ current = do
     Nothing -> error $ "No such block: " ++ show c
 
 -------------------------------------------------------------------------------
--- Symbol Table
--------------------------------------------------------------------------------
 
 assign :: String -> Operand -> Codegen ()
 assign var x = do
@@ -219,52 +212,33 @@ getvar var = do
 -------------------------------------------------------------------------------
 
 -- References
-local ::  Name -> Operand
-local = LocalReference integer
+local :: Type -> Name -> Operand
+local = LocalReference
 
-global ::  Name -> C.Constant
-global = C.GlobalReference integer
+global :: Type -> Name -> C.Constant
+global = C.GlobalReference
 
-externf :: Name -> Operand
-externf = ConstantOperand . C.GlobalReference integer
-
--- Arithmetic and Constants
-add :: Operand -> Operand -> Codegen Operand
-add a b = instr $ Add False False a b []
-
-sub :: Operand -> Operand -> Codegen Operand
-sub a b = instr $ Sub False False a b []
-
-mul :: Operand -> Operand -> Codegen Operand
-mul a b = instr $ Mul False False a b []
-
-idiv :: Operand -> Operand -> Codegen Operand
-idiv a b = instr $ UDiv False a b []
-
-icmp :: IP.IntegerPredicate -> Operand -> Operand -> Codegen Operand
-icmp cond a b = instr $ ICmp cond a b []
-
-cons :: C.Constant -> Operand
-cons = ConstantOperand
-
---uitofp :: Type -> Operand -> Codegen Operand
---uitofp ty a = instr $ UIToFP a ty []
+externf :: Type -> Name -> Operand
+externf x = ConstantOperand . C.GlobalReference x
 
 toArgs :: [Operand] -> [(Operand, [A.ParameterAttribute])]
 toArgs = map (\x -> (x, []))
 
 -- Effects
-call :: Operand -> [Operand] -> Codegen Operand
-call fn args = instr $ Call Nothing CC.C [] (Right fn) (toArgs args) [] []
+call :: Type -> Operand -> [Operand] -> Codegen Operand
+call t fn args = instr t $ Call Nothing CC.C [] (Right fn) (toArgs args) [] []
 
 alloca :: Type -> Codegen Operand
-alloca ty = instr $ Alloca ty Nothing 0 []
+alloca ty = instr ty $ Alloca ty Nothing 0 []
 
-store :: Operand -> Operand -> Codegen Operand
-store ptr val = instr $ Store False ptr val Nothing 0 []
+store :: Type -> Operand -> Operand -> Codegen Operand
+store ty ptr val = instr ty $ Store False ptr val Nothing 0 []
 
-load :: Operand -> Codegen Operand
-load ptr = instr $ Load False ptr Nothing 0 []
+load :: Type -> Operand -> Codegen Operand
+load ty ptr = instr ty $ Load False ptr Nothing 0 []
+
+cons :: C.Constant -> Operand
+cons = ConstantOperand
 
 -- Control Flow
 br :: Name -> Codegen (Named Terminator)

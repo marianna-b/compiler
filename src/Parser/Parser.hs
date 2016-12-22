@@ -47,11 +47,14 @@ finalExpr = L.parens expr <|>
             Literal <$> literal <|>
             Binding <$> binding
 
+types :: Parser String
+types = L.builtInType "double" <|> L.builtInType "int"
+
 binding :: Parser BindingName
-binding = L.identifier
+binding = (,) <$> (types <* L.symbol ":") <*> L.identifier
 
 bindingDecl :: Parser BindingName
-bindingDecl = L.identifier
+bindingDecl = (,) <$> (types <* L.symbol ":") <*> L.identifier
 
 literal :: Parser LiteralValue
 literal = IntegerLiteral <$> L.integer
