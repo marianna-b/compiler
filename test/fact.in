@@ -1,0 +1,21 @@
+extern int : putchar int : arg
+extern int : getchar int : arg
+def int : return int : a = a;
+
+extern int : fact int : arg
+def int : fact int : a = if (ieq a 1) then 1 else imul a (fact (isub a 1));
+
+def int : mod int : a int : b = let int : x = idiv a b in
+			        let int : y = imul x b in
+			        isub a y;
+
+extern int : print int : arg
+def int : print int : a = if (ineq a 0) then 
+				let int : x = mod a 10 in
+			  	let int : y = print (idiv a 10) in
+		 	  	putchar (iadd 48 x) 
+			  else 0;
+
+def int : main = 
+		print (fact 7);
+		return 0;	

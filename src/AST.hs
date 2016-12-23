@@ -28,4 +28,5 @@ type BindingName = String
 type ParamsList = [TypedBindingName]
 
 data LiteralValue = IntegerLiteral Integer
+                  | FloatLiteral Double
                   deriving (Show)

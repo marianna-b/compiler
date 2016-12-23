@@ -6,6 +6,7 @@ module Parser.Lexer
        , symbol
        , parens
        , integer
+       , float
        , reservedWord
        , identifier
        , builtInType
@@ -22,6 +23,7 @@ reservedWords = [ "if"
                 , "else"
                 , "let"
                 , "in"
+                , "for"
                 , "extern"
                 , "def"
                 , "string"
@@ -45,6 +47,9 @@ parens = between (symbol "(") (symbol ")")
 
 integer :: Parser Integer
 integer = lexeme L.integer
+
+float :: Parser Double
+float = lexeme L.float
 
 reservedWord :: String -> Parser ()
 reservedWord w = string w *> notFollowedBy alphaNumChar *> spaceConsumer

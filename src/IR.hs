@@ -6,6 +6,7 @@ import qualified LLVM.General.Module as M
 import qualified LLVM.General.Context as CTX
 import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
+import qualified LLVM.General.AST.Float as F
 
 import Control.Monad.Except
 import Control.Monad.State
@@ -68,6 +69,7 @@ nonStlGen _ = error "Unsupported expression"
 
 cgen :: A.Expr -> Codegen AST.Operand
 cgen (A.Binding x) = getvar x >>= load
+cgen (A.Literal (A.FloatLiteral n)) = return $ cons $ C.Float (F.Double n) 
 cgen (A.Literal (A.IntegerLiteral n)) = return $ cons $ C.Int 64 n
 cgen (A.IF cond tr fl) = do
   ifthen <- addBlock "if.then"

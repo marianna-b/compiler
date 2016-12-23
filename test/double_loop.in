@@ -1,0 +1,8 @@
+extern int : putchar int : arg
+extern int : getchar int : arg
+def int : return int : a = a;
+def int : main = 
+	for double : i = 0.0 , flt i 2.0 , 0.1 in
+	putchar 100;
+	
+	return 0;

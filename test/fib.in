@@ -1,0 +1,17 @@
+extern int : putchar int : arg
+extern int : getchar int : arg
+def int : return int : a = a;
+def int : mod int : a int : b = let int : x = idiv a b in
+			        let int : y = imul x b in
+			        isub a y;
+extern int : print int : arg
+def int : print int : a = if (ineq a 0) then 
+				let int : x = mod a 10 in
+			  	let int : y = print (idiv a 10) in
+		 	  	putchar (iadd 48 x) 
+			  else 0;
+extern int : fib int : arg
+def int : fib int : a = if (ieq a 0) then 0 else if (ieq a 1) then 1 else iadd (fib (isub a 1)) (fib (isub a 2));
+def int : main = 
+	print (fib 6);
+	return 0;

@@ -8,12 +8,13 @@ import LLVM
 import Control.Monad.Trans
 import System.Environment
 import System.Console.Haskeline
+--import Debug.Trace(trace)
 
 import qualified LLVM.General.AST as AST
 
 
 initModule :: AST.Module
-initModule = emptyModule "my cool jit"
+initModule = emptyModule ""
 
 process :: AST.Module -> String -> IO (Maybe AST.Module)
 process modo source = do

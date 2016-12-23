@@ -1,0 +1,8 @@
+extern int : putchar int : arg
+extern int : getchar int : arg
+def int : return int : a = a;
+def int : main = 
+	for int: i = 0 , ilt i 20 , 1 in
+	putchar 100;
+	
+	return 0;

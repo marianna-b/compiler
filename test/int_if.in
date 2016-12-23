@@ -1,0 +1,8 @@
+extern int : putchar int : arg
+extern int : getchar int : arg
+def int : return int : a = a;
+def int : main = 
+	let int : x = getchar 0 in
+	if (igt x 100) then putchar (isub x 1) else putchar (iadd x 1);
+	
+	return 0;

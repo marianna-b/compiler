@@ -1,11 +1,9 @@
 {-# OPTIONS -Wall #-}
-module Parser.Parser
-       (
-         parseFile
-       ) where
+module Parser.Parser where
 
 import Text.Megaparsec
 import Text.Megaparsec.String
+--import Debug.Trace(trace)
 
 import AST ( Module
            , TopLevelDecl (..)
@@ -70,7 +68,7 @@ for = do
   step <- expr
   L.reservedWord "in"
   body <- expr
-  return $ For var start cond step body
+  return (For var start cond step body) --trace (show $ For var start cond step body) (For var start cond step body)
 
 letins :: Parser Expr
 letins = do
@@ -92,7 +90,7 @@ bindingDecl :: Parser TypedBindingName
 bindingDecl = (,) <$> (types <* L.symbol ":") <*> L.identifier
 
 literal :: Parser LiteralValue
-literal = IntegerLiteral <$> L.integer
+literal = try (FloatLiteral <$> L.float) <|> (IntegerLiteral <$> L.integer)
 
 funcCall :: Parser [Expr]
 funcCall = (:) <$> finalExpr <*> some finalExpr
