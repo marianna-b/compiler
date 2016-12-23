@@ -1,3 +1,4 @@
+{-# OPTIONS -Wall #-}
 module Parser.Lexer
        ( reservedWords
        , spaceConsumer
@@ -12,7 +13,6 @@ module Parser.Lexer
 
 import Control.Monad (void)
 import Text.Megaparsec
-import Text.Megaparsec.Expr
 import Text.Megaparsec.String
 import qualified Text.Megaparsec.Lexer as L
 

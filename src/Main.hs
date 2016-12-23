@@ -1,3 +1,4 @@
+{-# OPTIONS -Wall #-}
 module Main where
 
 import Parser(parseFile)
@@ -5,8 +6,6 @@ import Codegeneration
 import IR
 
 import Control.Monad.Trans
-
-import System.IO
 import System.Environment
 import System.Console.Haskeline
 
@@ -31,19 +30,19 @@ processFile fname = readFile fname >>= process initModule
 repl :: IO ()
 repl = runInputT defaultSettings (loop initModule)
   where
-  loop mod = do
+  loop md = do
     minput <- getInputLine "ready> "
     case minput of
       Nothing -> outputStrLn "Goodbye."
       Just input -> do
-        modn <- liftIO $ process mod input
+        modn <- liftIO $ process md input
         case modn of
-          Just modn -> loop modn
-          Nothing -> loop mod
+          Just mdn -> loop mdn
+          Nothing -> loop md
 
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     []      -> repl
-    [fname] -> processFile fname >> return ()
+    (fname:_) -> processFile fname >> return ()

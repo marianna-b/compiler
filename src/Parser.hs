@@ -1,3 +1,4 @@
+{-# OPTIONS -Wall #-}
 module Parser
        ( module Parser.Lexer
        , module Parser.Parser

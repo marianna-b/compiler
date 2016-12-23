@@ -1,3 +1,4 @@
+{-# OPTIONS -Wall #-}
 module Parser.Parser
        (
          parseFile

@@ -1,15 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS -Wall #-}
 module Codegeneration where
 
-import Data.Word
-import Data.String
 import Data.List
 import Data.Function
 import qualified Data.Map as Map
 
 import Control.Monad.State
-import Control.Applicative
 
 import LLVM.General.AST
 import LLVM.General.AST.Type
@@ -19,8 +17,6 @@ import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
 import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.CallingConvention as CC
-import qualified LLVM.General.AST.IntegerPredicate as IP
-
 
 integer :: Type
 integer = i64
@@ -28,8 +24,6 @@ integer = i64
 double :: Type
 double = FloatingPointType 64 IEEE
 
--------------------------------------------------------------------------------
--- Module Level
 -------------------------------------------------------------------------------
 
 newtype LLVM a = LLVM { unLLVM :: State AST.Module a }
@@ -65,8 +59,6 @@ external retty n argtys = addDefn $
   }
 
 -------------------------------------------------------------------------------
--- Names
--------------------------------------------------------------------------------
 
 type Names = Map.Map String Int
 
@@ -76,11 +68,6 @@ uniqueName nm ns =
     Nothing -> (nm,  Map.insert nm 1 ns)
     Just ix -> (nm ++ show ix, Map.insert nm (ix+1) ns)
 
-instance IsString Name where
-  fromString = Name . fromString
-
--------------------------------------------------------------------------------
--- Codegen State
 -------------------------------------------------------------------------------
 
 type SymbolTable = [(String, Operand)]
@@ -102,8 +89,6 @@ data BlockState
   , term  :: Maybe (Named Terminator)       -- Block terminator
   } deriving Show
 
--------------------------------------------------------------------------------
--- Codegen Operations
 -------------------------------------------------------------------------------
 
 newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
@@ -154,8 +139,6 @@ terminator trm = do
   modifyBlock (blk { term = Just trm })
   return trm
 
--------------------------------------------------------------------------------
--- Block Stack
 -------------------------------------------------------------------------------
 
 entry :: Codegen Name
@@ -211,7 +194,6 @@ getvar var = do
 
 -------------------------------------------------------------------------------
 
--- References
 local :: Type -> Name -> Operand
 local = LocalReference
 
@@ -232,10 +214,10 @@ alloca :: Type -> Codegen Operand
 alloca ty = instr ty $ Alloca ty Nothing 0 []
 
 store :: Type -> Operand -> Operand -> Codegen Operand
-store ty ptr val = instr ty $ Store False ptr val Nothing 0 []
+store ty pt val = instr ty $ Store False pt val Nothing 0 []
 
 load :: Type -> Operand -> Codegen Operand
-load ty ptr = instr ty $ Load False ptr Nothing 0 []
+load ty pt = instr ty $ Load False pt Nothing 0 []
 
 cons :: C.Constant -> Operand
 cons = ConstantOperand

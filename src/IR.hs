@@ -1,20 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS -Wall #-}
 module IR where
 
 import qualified LLVM.General.Module as M
 import qualified LLVM.General.Context as CTX
 
-import qualified LLVM.General.AST.Type as T
 import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
-import qualified LLVM.General.AST.IntegerPredicate as IP
 
-import qualified Data.Word
-import qualified Data.Int
-import Data.Traversable(traverse)
 import Control.Monad.Except
-import Control.Applicative
-import qualified Data.Map as Map
 
 import Codegeneration
 import qualified AST as A
@@ -37,12 +30,12 @@ codegenTop (A.FuncDecl tn args body) = do
       (t, name) = parseType tn
       fnargs = toSig args
       bls = createBlocks $ execCodegen $ do
-        entry <- addBlock entryBlockName
-        setBlock entry
-        forM args $ \(t1, a) -> do
+        entr <- addBlock entryBlockName
+        _ <- setBlock entr
+        _ <- ($) forM args $ \(t1, a) -> do
           let ty = typed t1
           var <- alloca ty
-          store ty var (local ty (AST.Name a))
+          _ <- store ty var (local ty (AST.Name a))
           assign a var
         traverse (\x -> cgen x >>= ret) body
 
@@ -59,17 +52,17 @@ cgen (A.FuncCall  (A.Binding (t, fn):args)) = do
   largs <- mapM cgen args
   let ty = typed t
   call ty (externf ty (AST.Name fn)) largs
-
+cgen _ = error "Unsupported expression"
 
 liftError :: ExceptT String IO a -> IO a
 liftError = runExceptT >=> either fail return
 
 codegen :: AST.Module -> A.Module -> IO AST.Module
-codegen mod fns = CTX.withContext $ \context ->
+codegen md fns = CTX.withContext $ \context ->
   liftError $ M.withModuleFromAST context newast $ \m -> do
     llstr <- M.moduleLLVMAssembly m
     putStrLn llstr
     return newast
   where
     modn    = mapM codegenTop fns
-    newast  = runLLVM mod modn
+    newast  = runLLVM md modn
