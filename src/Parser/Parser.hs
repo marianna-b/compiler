@@ -6,13 +6,13 @@ module Parser.Parser
 
 import Text.Megaparsec
 import Text.Megaparsec.String
+import Debug.Trace(trace)
 
-import AST ( Module (..)
+import AST ( Module
            , TopLevelDecl (..)
            , Expr (..)
-           , BindingName (..)
-           , TypedBindingName (..)
-           , ParamsList (..)
+           , BindingName
+           , TypedBindingName
            , LiteralValue (..))
 import qualified Parser.Lexer as L
 
@@ -41,13 +41,47 @@ externFuncDecl = ExternFunc <$> (L.reservedWord "extern" *> name) <*> params
         params = many bindingDecl
 
 expr :: Parser Expr
-expr = try (FuncCall <$> funcCall) <|>
+expr = try (FuncCall <$> funcCall) <|> ifthen <|> for <|> letins <|>
        finalExpr
 
 finalExpr :: Parser Expr
 finalExpr = L.parens expr <|>
             Literal <$> literal <|>
             Binding <$> binding
+
+ifthen :: Parser Expr
+ifthen = do
+  L.reservedWord "if"
+  cond <- expr
+  L.reservedWord "then"
+  tr <- expr
+  L.reservedWord "else"
+  fl <- expr
+  return $ IF cond tr fl
+
+for :: Parser Expr
+for = do
+  L.reservedWord "for"
+  var <- bindingDecl
+  _ <- L.symbol "="
+  start <- finalExpr
+  _ <- L.symbol ","
+  cond <- expr
+  _ <- L.symbol ","
+  step <- expr
+  L.reservedWord "in"
+  body <- expr
+  return $ For var start cond step body
+
+letins :: Parser Expr
+letins = do
+  L.reservedWord "let"
+  (t, var) <- bindingDecl
+  _ <- L.symbol "="
+  val <- expr
+  L.reservedWord "in"
+  body <- expr
+  return $ Let (t, var) val body
 
 types :: Parser String
 types = L.builtInType "double" <|> L.builtInType "int"

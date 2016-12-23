@@ -84,7 +84,7 @@ fdiv :: Operand -> Operand -> Codegen Operand
 fdiv a b = instr double $ FDiv NoFastMathFlags a b []
 
 fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> Codegen Operand
-fcmp cond a b = instr double $ FCmp cond a b []
+fcmp cond a b = instr integer $ FCmp cond a b []
 
 iadd :: Operand -> Operand -> Codegen Operand
 iadd a b = instr integer $ Add False False a b []
@@ -101,7 +101,6 @@ idiv a b = instr integer $ UDiv False a b []
 icmp :: IP.IntegerPredicate -> Operand -> Operand -> Codegen Operand
 icmp cond a b = instr integer $ ICmp cond a b []
 
-
 stl :: Map.Map String (Operand -> Operand -> Codegen Operand)
 stl = Map.fromList [
       ("iadd", iadd)
@@ -117,7 +116,9 @@ stl = Map.fromList [
     , ("fmul", fmul)
     , ("fdiv", fdiv)
     , ("flt", (fcmp FP.ULT))
-    , ("fbt", (fcmp FP.UGT))
+    , ("fgt", (fcmp FP.UGT))
     , ("feq", (fcmp FP.UEQ))
     , ("fneq", (fcmp FP.UNE))
   ]
+phi :: Type -> [(Operand, Name)] -> Codegen Operand
+phi ty incoming = instr ty $ Phi ty incoming []

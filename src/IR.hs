@@ -1,6 +1,7 @@
 {-# OPTIONS -Wall #-}
 module IR where
 
+import qualified LLVM.General.AST.IntegerPredicate as IP
 import qualified LLVM.General.Module as M
 import qualified LLVM.General.Context as CTX
 import qualified LLVM.General.AST as AST
@@ -68,6 +69,61 @@ nonStlGen _ = error "Unsupported expression"
 cgen :: A.Expr -> Codegen AST.Operand
 cgen (A.Binding x) = getvar x >>= load
 cgen (A.Literal (A.IntegerLiteral n)) = return $ cons $ C.Int 64 n
+cgen (A.IF cond tr fl) = do
+  ifthen <- addBlock "if.then"
+  ifelse <- addBlock "if.else"
+  ifexit <- addBlock "if.exit"
+
+  cnd <- cgen cond
+  test <- icmp IP.NE (cons $ C.Int 1 0) cnd
+  _ <- cbr test ifthen ifelse
+
+  _ <- setBlock ifthen
+  trval <- cgen tr
+  _ <- br ifexit
+  ifthen' <- getBlock
+
+  _ <- setBlock ifelse
+  flval <- cgen fl
+  _ <- br ifexit
+  ifelse' <- getBlock
+
+  _ <- setBlock ifexit
+  phi integer [(trval, ifthen'), (flval, ifelse')]
+
+cgen (A.For (t, ivar) start cond step body) = do
+  forloop <- addBlock "for.loop"
+  forexit <- addBlock "for.exit"
+
+  i <- alloca $ typed t
+  istart <- cgen start
+  stepval <- cgen step
+
+  _ <- store i istart
+  assign ivar i
+  _ <- br forloop
+
+  _ <- setBlock forloop
+  _ <- cgen body
+  ival <- load i
+  inext <- case t of
+             "int" -> iadd ival stepval
+             "double" -> fadd ival stepval
+             _ -> error $ "Non supported type" ++ t
+  _ <- store i inext
+
+  cnd <- cgen cond
+  test <- icmp IP.NE (cons $ C.Int 1 0) cnd
+  _ <- cbr test forloop forexit
+
+  _ <- setBlock forexit
+  return (cons $ C.Int 64 0)
+cgen (A.Let (t, a) b c) = do
+  i <- alloca $ typed t
+  val <- cgen b
+  _ <- store i val
+  assign a i
+  cgen c
 cgen func@(A.FuncCall (A.Binding s:[x, y])) =
   case Map.lookup s stl of
     Just f -> exec f x y
