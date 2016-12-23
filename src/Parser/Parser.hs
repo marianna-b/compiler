@@ -11,6 +11,7 @@ import AST ( Module (..)
            , TopLevelDecl (..)
            , Expr (..)
            , BindingName (..)
+           , TypedBindingName (..)
            , ParamsList (..)
            , LiteralValue (..))
 import qualified Parser.Lexer as L
@@ -31,13 +32,13 @@ topLevelDecl = topLevelFuncDecl <|> externFuncDecl
 topLevelFuncDecl :: Parser TopLevelDecl
 topLevelFuncDecl = FuncDecl <$> (L.reservedWord "def" *> name) <*> params <* L.symbol "=" <*> body
   where name = bindingDecl
-        params = many binding
+        params = many bindingDecl
         body = some $ expr <* L.symbol ";"
 
 externFuncDecl :: Parser TopLevelDecl
 externFuncDecl = ExternFunc <$> (L.reservedWord "extern" *> name) <*> params
   where name = bindingDecl
-        params = many binding
+        params = many bindingDecl
 
 expr :: Parser Expr
 expr = try (FuncCall <$> funcCall) <|>
@@ -52,9 +53,9 @@ types :: Parser String
 types = L.builtInType "double" <|> L.builtInType "int"
 
 binding :: Parser BindingName
-binding = (,) <$> (types <* L.symbol ":") <*> L.identifier
+binding = L.identifier
 
-bindingDecl :: Parser BindingName
+bindingDecl :: Parser TypedBindingName
 bindingDecl = (,) <$> (types <* L.symbol ":") <*> L.identifier
 
 literal :: Parser LiteralValue

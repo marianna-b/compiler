@@ -2,8 +2,8 @@
 module Main where
 
 import Parser(parseFile)
-import Codegeneration
 import IR
+import LLVM
 
 import Control.Monad.Trans
 import System.Environment

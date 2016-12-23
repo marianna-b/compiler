@@ -2,6 +2,7 @@ module AST
        ( Module (..)
        , TopLevelDecl (..)
        , Expr (..)
+       , TypedBindingName (..)
        , BindingName (..)
        , ParamsList (..)
        , LiteralValue (..)
@@ -9,8 +10,8 @@ module AST
 
 type Module = [TopLevelDecl]
 
-data TopLevelDecl = FuncDecl BindingName ParamsList [Expr]
-                  | ExternFunc BindingName ParamsList
+data TopLevelDecl = FuncDecl TypedBindingName ParamsList [Expr]
+                  | ExternFunc TypedBindingName ParamsList
                   deriving (Show)
 
 data Expr = Literal LiteralValue
@@ -18,9 +19,10 @@ data Expr = Literal LiteralValue
           | FuncCall [Expr]
           deriving (Show)
 
-type BindingName = (String, String)
+type TypedBindingName = (String, String)
+type BindingName = String
 
-type ParamsList = [BindingName]
+type ParamsList = [TypedBindingName]
 
 data LiteralValue = IntegerLiteral Integer
                   deriving (Show)
