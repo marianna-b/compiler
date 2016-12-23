@@ -8,6 +8,7 @@ import qualified LLVM.General.AST.Constant as C
 
 import Control.Monad.Except
 import Control.Monad.State
+import Data.Map as Map
 
 import Types
 import LLVM
@@ -24,7 +25,7 @@ parseType :: (String, String) -> (AST.Type, AST.Name)
 parseType (t, x) = (typed t, AST.Name x)
 
 toSig :: [(String, String)] -> [(AST.Type, AST.Name)]
-toSig = map parseType
+toSig = Prelude.map parseType
 
 codegenTop :: A.TopLevelDecl -> LLVM ()
 codegenTop (A.FuncDecl tn args body) = do
@@ -51,14 +52,27 @@ codegenTop (A.ExternFunc tn args) = do
     fnargs = toSig args
     (t, name) = parseType tn
 
-cgen :: A.Expr -> Codegen AST.Operand
-cgen (A.Binding x) = getvar x >>= load
-cgen (A.Literal (A.IntegerLiteral n)) = return $ cons $ C.Int 64 n
-cgen (A.FuncCall  (A.Binding fn:args)) = do
+exec :: (AST.Operand -> AST.Operand -> Codegen AST.Operand) -> A.Expr -> A.Expr -> Codegen AST.Operand
+exec f x y = do
+  a <- cgen x
+  b <- cgen y
+  f a b
+
+nonStlGen :: A.Expr -> Codegen AST.Operand
+nonStlGen (A.FuncCall  (A.Binding fn:args)) = do
   t <- getFuncType $ AST.Name fn
   largs <- mapM cgen args
   call (externf t (AST.Name fn)) largs
-cgen _ = error "Unsupported expression"
+nonStlGen _ = error "Unsupported expression"
+
+cgen :: A.Expr -> Codegen AST.Operand
+cgen (A.Binding x) = getvar x >>= load
+cgen (A.Literal (A.IntegerLiteral n)) = return $ cons $ C.Int 64 n
+cgen func@(A.FuncCall (A.Binding s:[x, y])) =
+  case Map.lookup s stl of
+    Just f -> exec f x y
+    Nothing -> nonStlGen func
+cgen x = nonStlGen x
 
 liftError :: ExceptT String IO a -> IO a
 liftError = runExceptT >=> either fail return

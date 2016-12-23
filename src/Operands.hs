@@ -4,11 +4,15 @@
 module Operands where
 
 import Codegeneration
+import Types
 
 import Control.Monad.State
+import Data.Map as Map
 
 import LLVM.General.AST
 
+import qualified LLVM.General.AST.FloatingPointPredicate as FP
+import qualified LLVM.General.AST.IntegerPredicate as IP
 import qualified LLVM.General.AST.Constant as C
 import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.CallingConvention as CC
@@ -21,7 +25,7 @@ assign var x = do
 getvar :: String -> Codegen Operand
 getvar var = do
   syms <- gets symtab
-  case lookup var syms of
+  case Prelude.lookup var syms of
     Just x  -> return x
     Nothing -> error $ "Local variable not in scope: " ++ show var
 
@@ -35,7 +39,7 @@ externf :: Type -> Name -> Operand
 externf x = ConstantOperand . C.GlobalReference x
 
 toArgs :: [Operand] -> [(Operand, [A.ParameterAttribute])]
-toArgs = map (\x -> (x, []))
+toArgs = Prelude.map (\x -> (x, []))
 
 -- Effects
 call :: Operand -> [Operand] -> Codegen Operand
@@ -66,3 +70,54 @@ cbr cond tr fl = terminator $ Do $ CondBr cond tr fl []
 
 ret :: Operand -> Codegen (Named Terminator)
 ret val = terminator $ Do $ Ret (Just val) []
+
+fadd :: Operand -> Operand -> Codegen Operand
+fadd a b = instr double $ FAdd NoFastMathFlags a b []
+
+fsub :: Operand -> Operand -> Codegen Operand
+fsub a b = instr double $ FSub NoFastMathFlags a b []
+
+fmul :: Operand -> Operand -> Codegen Operand
+fmul a b = instr double $ FMul NoFastMathFlags a b []
+
+fdiv :: Operand -> Operand -> Codegen Operand
+fdiv a b = instr double $ FDiv NoFastMathFlags a b []
+
+fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> Codegen Operand
+fcmp cond a b = instr double $ FCmp cond a b []
+
+iadd :: Operand -> Operand -> Codegen Operand
+iadd a b = instr integer $ Add False False a b []
+
+isub :: Operand -> Operand -> Codegen Operand
+isub a b = instr integer $ Sub False False a b []
+
+imul :: Operand -> Operand -> Codegen Operand
+imul a b = instr integer $ Mul False False a b []
+
+idiv :: Operand -> Operand -> Codegen Operand
+idiv a b = instr integer $ UDiv False a b []
+
+icmp :: IP.IntegerPredicate -> Operand -> Operand -> Codegen Operand
+icmp cond a b = instr integer $ ICmp cond a b []
+
+
+stl :: Map.Map String (Operand -> Operand -> Codegen Operand)
+stl = Map.fromList [
+      ("iadd", iadd)
+    , ("isub", isub)
+    , ("imul", imul)
+    , ("idiv", idiv)
+    , ("ilt", (icmp IP.ULT))
+    , ("igt", (icmp IP.UGT))
+    , ("ieq", (icmp IP.EQ))
+    , ("ineq", (icmp IP.NE))
+    , ("fadd", fadd)
+    , ("fsub", fsub)
+    , ("fmul", fmul)
+    , ("fdiv", fdiv)
+    , ("flt", (fcmp FP.ULT))
+    , ("fbt", (fcmp FP.UGT))
+    , ("feq", (fcmp FP.UEQ))
+    , ("fneq", (fcmp FP.UNE))
+  ]
