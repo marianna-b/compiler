@@ -24,12 +24,11 @@ addDefn d = do
   defs <- gets moduleDefinitions
   modify $ \s -> s { moduleDefinitions = defs ++ [d] }
 
-getTypes :: [Definition] -> Map Name Type--, [Type])
+getTypes :: [Definition] -> Map Name Type
 getTypes [] = empty
 getTypes (GlobalDefinition g:xs) = insert n t $ getTypes xs
   where n = name g
         t = returnType g
---        argT = Prelude.map (\(Parameter ty _ _) -> ty) $ fst $ parameters g
 getTypes (_:xs) = getTypes xs
 
 define ::  Type -> Name -> [(Type, Name)] -> [BasicBlock] -> LLVM ()

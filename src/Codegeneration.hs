@@ -18,26 +18,24 @@ uniqueName nm ns =
     Nothing -> (nm,  Map.insert nm 1 ns)
     Just ix -> (nm ++ show ix, Map.insert nm (ix+1) ns)
 
--------------------------------------------------------------------------------
-
 type SymbolTable = [(String, Operand)]
 
 data CodegenState
   = CodegenState {
-    currentBlock :: Name                     -- Name of the active block to append to
-  , blocks       :: Map.Map Name BlockState  -- Blocks for function
-  , symtab       :: SymbolTable              -- Function scope symbol table
-  , blockCount   :: Int                      -- Count of basic blocks
-  , count        :: Word                     -- Count of unnamed instructions
-  , names        :: Names                    -- Name Supply
-  , funcTypes    :: Map.Map Name Type --, [Type])
+    currentBlock :: Name
+  , blocks       :: Map.Map Name BlockState
+  , symtab       :: SymbolTable
+  , blockCount   :: Int
+  , count        :: Word
+  , names        :: Names
+  , funcTypes    :: Map.Map Name Type
   } deriving Show
 
 data BlockState
   = BlockState {
-    idx   :: Int                            -- Block index
-  , stack :: [Named Instruction]            -- Stack of instructions
-  , term  :: Maybe (Named Terminator)       -- Block terminator
+    idx   :: Int
+  , stack :: [Named Instruction]
+  , term  :: Maybe (Named Terminator)
   } deriving Show
 
 newtype Codegen a = Codegen { runCodegen :: State CodegenState a }
@@ -87,8 +85,6 @@ terminator trm = do
   blk <- current
   modifyBlock (blk { term = Just trm })
   return trm
-
--------------------------------------------------------------------------------
 
 entry :: Codegen Name
 entry = gets currentBlock

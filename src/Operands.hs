@@ -25,8 +25,6 @@ getvar var = do
     Just x  -> return x
     Nothing -> error $ "Local variable not in scope: " ++ show var
 
--------------------------------------------------------------------------------
-
 local :: Type -> Name -> Operand
 local = LocalReference
 
