@@ -6,7 +6,6 @@ module Parser.Parser
 
 import Text.Megaparsec
 import Text.Megaparsec.String
-import Debug.Trace(trace)
 
 import AST ( Module
            , TopLevelDecl (..)
