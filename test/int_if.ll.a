@@ -1,0 +1,41 @@
+
+declare i64 @putchar(i64)
+
+declare i64 @getchar(i64)
+
+define i64 @return(i64 %a) {
+entry:
+  %0 = alloca i64
+  store i64 %a, i64* %0
+  %1 = load i64* %0
+  ret i64 %1
+}
+
+define i64 @main() {
+entry:
+  %0 = alloca i64
+  %1 = call i64 @getchar(i64 0)
+  store i64 %1, i64* %0
+  %2 = load i64* %0
+  %3 = icmp ugt i64 %2, 100
+  %4 = icmp ne i1 false, %3
+  br i1 %4, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %5 = load i64* %0
+  %6 = sub i64 %5, 1
+  %7 = call i64 @putchar(i64 %6)
+  br label %if.exit
+
+if.else:                                          ; preds = %entry
+  %8 = load i64* %0
+  %9 = add i64 %8, 1
+  %10 = call i64 @putchar(i64 %9)
+  br label %if.exit
+
+if.exit:                                          ; preds = %if.else, %if.then
+  %11 = phi i64 [ %7, %if.then ], [ %10, %if.else ]
+  %12 = call i64 @return(i64 0)
+  ret i64 %12
+}
+

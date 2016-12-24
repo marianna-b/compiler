@@ -9,12 +9,24 @@ for test in ./test/*.in ; do
 	if [[ -f "$test".ll.a ]]; then
 		diff "$test".ll "$test".ll.a > "$test".ll.out
 		if [[ $? != 0 ]]; then
-			echo "failed, see $test.ll.out"
+			echo -n "codegen failed, see $test.ll.out "
 		else
-			echo "passed"
+			echo -n "codegen passed "
 			rm "$test".ll.out
 		fi
 	else
-		echo "failed"
+		echo -n "codegen failed - not found "
+	fi
+	stack exec compiler ast "$test".in > "$test".ast
+	if [[ -f "$test".ast.a ]]; then
+		diff "$test".ast "$test".ast.a > "$test".ast.out
+		if [[ $? != 0 ]]; then
+			echo "ast failed, see $test.ast.out"
+		else
+			echo "ast passed"
+			rm "$test".ast.out
+		fi
+	else
+		echo "ast failed - not found"
 	fi
 done

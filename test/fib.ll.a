@@ -1,0 +1,119 @@
+
+declare i64 @putchar(i64)
+
+declare i64 @getchar(i64)
+
+define i64 @return(i64 %a) {
+entry:
+  %0 = alloca i64
+  store i64 %a, i64* %0
+  %1 = load i64* %0
+  ret i64 %1
+}
+
+define i64 @mod(i64 %a, i64 %b) {
+entry:
+  %0 = alloca i64
+  store i64 %a, i64* %0
+  %1 = alloca i64
+  store i64 %b, i64* %1
+  %2 = alloca i64
+  %3 = load i64* %0
+  %4 = load i64* %1
+  %5 = udiv i64 %3, %4
+  store i64 %5, i64* %2
+  %6 = alloca i64
+  %7 = load i64* %2
+  %8 = load i64* %1
+  %9 = mul i64 %7, %8
+  store i64 %9, i64* %6
+  %10 = load i64* %0
+  %11 = load i64* %6
+  %12 = sub i64 %10, %11
+  ret i64 %12
+}
+
+declare i64 @print(i64)
+
+define i64 @print1(i64 %a) {
+entry:
+  %0 = alloca i64
+  store i64 %a, i64* %0
+  %1 = load i64* %0
+  %2 = icmp ne i64 %1, 0
+  %3 = icmp ne i1 false, %2
+  br i1 %3, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %4 = alloca i64
+  %5 = load i64* %0
+  %6 = call i64 @mod(i64 %5, i64 10)
+  store i64 %6, i64* %4
+  %7 = alloca i64
+  %8 = load i64* %0
+  %9 = udiv i64 %8, 10
+  %10 = call i64 @print1(i64 %9)
+  store i64 %10, i64* %7
+  %11 = load i64* %4
+  %12 = add i64 48, %11
+  %13 = call i64 @putchar(i64 %12)
+  br label %if.exit
+
+if.else:                                          ; preds = %entry
+  br label %if.exit
+
+if.exit:                                          ; preds = %if.else, %if.then
+  %14 = phi i64 [ %13, %if.then ], [ 0, %if.else ]
+  ret i64 %14
+}
+
+declare i64 @fib(i64)
+
+define i64 @fib2(i64 %a) {
+entry:
+  %0 = alloca i64
+  store i64 %a, i64* %0
+  %1 = load i64* %0
+  %2 = icmp eq i64 %1, 0
+  %3 = icmp ne i1 false, %2
+  br i1 %3, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  br label %if.exit
+
+if.else:                                          ; preds = %entry
+  %4 = load i64* %0
+  %5 = icmp eq i64 %4, 1
+  %6 = icmp ne i1 false, %5
+  br i1 %6, label %if.then1, label %if.else1
+
+if.exit:                                          ; preds = %if.exit1, %if.then
+  %7 = phi i64 [ 0, %if.then ], [ %15, %if.exit1 ]
+  ret i64 %7
+
+if.then1:                                         ; preds = %if.else
+  br label %if.exit1
+
+if.else1:                                         ; preds = %if.else
+  %8 = load i64* %0
+  %9 = sub i64 %8, 1
+  %10 = call i64 @fib2(i64 %9)
+  %11 = load i64* %0
+  %12 = sub i64 %11, 2
+  %13 = call i64 @fib2(i64 %12)
+  %14 = add i64 %10, %13
+  br label %if.exit1
+
+if.exit1:                                         ; preds = %if.else1, %if.then1
+  %15 = phi i64 [ 1, %if.then1 ], [ %14, %if.else1 ]
+  br label %if.exit
+}
+
+define i64 @main() {
+entry:
+  %0 = call i64 @fib2(i64 6)
+  %1 = call i64 @print1(i64 %0)
+  %2 = call i64 @return(i64 0)
+  ret i64 %2
+}
+

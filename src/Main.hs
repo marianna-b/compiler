@@ -4,6 +4,7 @@ module Main where
 import Parser(parseFile)
 import IR
 import LLVM
+import AST as A
 
 import Control.Monad.Trans
 import System.Environment
@@ -28,6 +29,13 @@ process modo source = do
 processFile :: String -> IO (Maybe AST.Module)
 processFile fname = readFile fname >>= process initModule
 
+getAst :: String -> IO (Maybe A.Module)
+getAst source = do
+  let res = parseFile source
+  case res of
+    Left err -> print err >> return Nothing
+    Right ex -> return $ Just ex
+
 repl :: IO ()
 repl = runInputT defaultSettings (loop initModule)
   where
@@ -45,5 +53,11 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    []      -> repl
-    (fname:_) -> processFile fname >> return ()
+    (_:fname:[]) -> do
+      x <- (readFile fname >>= getAst)
+      case x of
+        Nothing -> print "Failed"
+        Just ast -> print ast
+      return ()
+    (fname:[]) -> processFile fname >> return ()
+    _ -> error "unsupported args"
